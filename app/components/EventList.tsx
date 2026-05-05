@@ -1,38 +1,25 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import {
-  collection,
-  query,
-  where,
-  onSnapshot,
-  doc,
-  deleteDoc,
-} from "firebase/firestore";
-import { db } from "../lib/firebase";
-import { useAuth } from "../context/AuthContext";
 import { CalendarEvent } from "../types";
 import {
   Box,
   Card,
   CardContent,
   Typography,
-  CircularProgress,
   Chip,
   IconButton,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
+import { doc, deleteDoc } from "firebase/firestore";
+import { db } from "../lib/firebase";
 
 interface EventListProps {
+  events: CalendarEvent[];
   onEdit: (event: CalendarEvent) => void;
 }
 
-export default function EventList({ onEdit }: EventListProps) {
-  const { user } = useAuth();
-  const [events, setEvents] = useState<CalendarEvent[]>([]);
-  const [loading, setLoading] = useState(true);
-
+export default function EventList({ events, onEdit }: EventListProps) {
   const handleDelete = async (eventId: string) => {
     if (!window.confirm("Are you sure you want to delete this event?")) return;
 
@@ -43,48 +30,9 @@ export default function EventList({ onEdit }: EventListProps) {
     }
   };
 
-  useEffect(() => {
-    if (!user) return;
-
-    const q = query(collection(db, "events"), where("userId", "==", user.uid));
-
-    const unsubscribe = onSnapshot(
-      q,
-      (snapshot) => {
-        const fetchedEvents = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        })) as CalendarEvent[];
-
-        fetchedEvents.sort((a, b) => {
-          const dateA = a.createdAt || "";
-          const dateB = b.createdAt || "";
-          return new Date(dateB).getTime() - new Date(dateA).getTime();
-        });
-
-        setEvents(fetchedEvents);
-        setLoading(false);
-      },
-      (error) => {
-        console.error("Помилка отримання подій:", error);
-        setLoading(false);
-      },
-    );
-
-    return () => unsubscribe();
-  }, [user]);
-
-  if (loading) {
-    return (
-      <Box className="flex justify-center p-12">
-        <CircularProgress className="text-black" />
-      </Box>
-    );
-  }
-
   if (events.length === 0) {
     return (
-      <Box className="bg-white p-6 shadow-sm border border-gray-200 min-h-75 flex items-center justify-center">
+      <Box className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 min-h-75 flex items-center justify-center">
         <Typography color="textSecondary" className="text-lg">
           You donʼt have any events yet. Click Add Event to create one!
         </Typography>
@@ -127,6 +75,7 @@ export default function EventList({ onEdit }: EventListProps) {
                   className="capitalize mt-1"
                 />
               </Box>
+
               <Box>
                 <IconButton
                   onClick={() => onEdit(event)}
@@ -135,12 +84,10 @@ export default function EventList({ onEdit }: EventListProps) {
                 >
                   <EditIcon fontSize="small" />
                 </IconButton>
-
                 <IconButton
                   onClick={() => handleDelete(event.id!)}
                   color="error"
                   size="small"
-                  className="ml-2"
                 >
                   <DeleteIcon fontSize="small" />
                 </IconButton>
