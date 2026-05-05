@@ -22,8 +22,13 @@ import {
   IconButton,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
+import EditIcon from "@mui/icons-material/Edit";
 
-export default function EventList() {
+interface EventListProps {
+  onEdit: (event: CalendarEvent) => void;
+}
+
+export default function EventList({ onEdit }: EventListProps) {
   const { user } = useAuth();
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [loading, setLoading] = useState(true);
@@ -117,20 +122,29 @@ export default function EventList() {
                 </Typography>
                 <Chip
                   label={event.importance}
-                  color={getImportanceColor(event.importance) as any}
+                  color={getImportanceColor(event.importance)}
                   size="small"
                   className="capitalize mt-1"
                 />
               </Box>
+              <Box>
+                <IconButton
+                  onClick={() => onEdit(event)}
+                  color="primary"
+                  size="small"
+                >
+                  <EditIcon fontSize="small" />
+                </IconButton>
 
-              <IconButton
-                onClick={() => handleDelete(event.id!)}
-                color="error"
-                size="small"
-                className="ml-2"
-              >
-                <DeleteIcon fontSize="small" />
-              </IconButton>
+                <IconButton
+                  onClick={() => handleDelete(event.id!)}
+                  color="error"
+                  size="small"
+                  className="ml-2"
+                >
+                  <DeleteIcon fontSize="small" />
+                </IconButton>
+              </Box>
             </Box>
 
             <Typography

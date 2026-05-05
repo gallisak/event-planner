@@ -11,25 +11,47 @@ import {
   MenuItem,
   CircularProgress,
 } from "@mui/material";
-import { EventImportance } from "../types";
-import { collection, addDoc } from "firebase/firestore";
+import { EventImportance, CalendarEvent } from "../types";
+import { collection, addDoc, doc, updateDoc } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { useAuth } from "../context/AuthContext";
 
 interface AddEventModalProps {
   open: boolean;
   onClose: () => void;
+  eventToEdit?: CalendarEvent | null;
 }
 
 const importances: EventImportance[] = ["ordinary", "important", "critical"];
 
-export default function AddEventModal({ open, onClose }: AddEventModalProps) {
+export default function AddEventModal({
+  open,
+  onClose,
+  eventToEdit,
+}: AddEventModalProps) {
   const { user } = useAuth();
   const [title, setTitle] = useState("");
   const [date, setDate] = useState("");
   const [description, setDescription] = useState("");
   const [importance, setImportance] = useState<EventImportance>("ordinary");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const [prevOpen, setPrevOpen] = useState(false);
+  const [prevEvent, setPrevEvent] = useState<CalendarEvent | null | undefined>(
+    undefined,
+  );
+
+  if (open !== prevOpen || eventToEdit !== prevEvent) {
+    setPrevOpen(open);
+    setPrevEvent(eventToEdit);
+
+    if (open) {
+      setTitle(eventToEdit?.title || "");
+      setDate(eventToEdit?.date || "");
+      setDescription(eventToEdit?.description || "");
+      setImportance(eventToEdit?.importance || "ordinary");
+    }
+  }
 
   const handleSave = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -38,24 +60,29 @@ export default function AddEventModal({ open, onClose }: AddEventModalProps) {
     setIsSubmitting(true);
 
     try {
-      await addDoc(collection(db, "events"), {
-        title,
-        date,
-        description,
-        importance,
-        userId: user.uid,
-        createdAt: new Date().toISOString(),
-      });
-
-      console.log("Event successfully saved to Firestore!");
-
-      setTitle("");
-      setDate("");
-      setDescription("");
-      setImportance("ordinary");
+      if (eventToEdit?.id) {
+        const eventRef = doc(db, "events", eventToEdit.id);
+        await updateDoc(eventRef, {
+          title,
+          date,
+          description,
+          importance,
+        });
+        console.log("Event successfully updated!");
+      } else {
+        await addDoc(collection(db, "events"), {
+          title,
+          date,
+          description,
+          importance,
+          userId: user.uid,
+          createdAt: new Date().toISOString(),
+        });
+        console.log("Event successfully saved!");
+      }
       onClose();
     } catch (error) {
-      console.error("Error adding document: ", error);
+      console.error("Error saving document: ", error);
     } finally {
       setIsSubmitting(false);
     }
@@ -63,7 +90,9 @@ export default function AddEventModal({ open, onClose }: AddEventModalProps) {
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-      <DialogTitle className="font-bold">Add a new event</DialogTitle>
+      <DialogTitle className="font-bold">
+        {eventToEdit ? "Edit event" : "Add a new event"}
+      </DialogTitle>
 
       <form onSubmit={handleSave}>
         <DialogContent dividers className="flex flex-col gap-4">
@@ -80,10 +109,8 @@ export default function AddEventModal({ open, onClose }: AddEventModalProps) {
             type="datetime-local"
             required
             fullWidth
-            slotProps={{
-              inputLabel: { shrink: true },
-            }}
             value={date}
+            slotProps={{ inputLabel: { shrink: true } }}
             onChange={(e) => setDate(e.target.value)}
           />
 

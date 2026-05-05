@@ -6,9 +6,21 @@ import AddEventModal from "./components/AddEventModal";
 import EventList from "./components/EventList";
 import { Container, Typography, Box, Button } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
+import { CalendarEvent } from "./types";
 
 export default function Home() {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [eventToEdit, setEventToEdit] = useState<CalendarEvent | null>(null);
+
+  const handleOpenModal = (event?: CalendarEvent) => {
+    setEventToEdit(event || null);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setEventToEdit(null);
+    setIsModalOpen(false);
+  };
 
   return (
     <Box className="min-h-screen bg-gray-50 flex flex-col">
@@ -26,17 +38,21 @@ export default function Home() {
           <Button
             variant="contained"
             startIcon={<AddIcon />}
-            onClick={() => setIsModalOpen(true)}
+            onClick={() => handleOpenModal()}
             className="bg-black text-white hover:bg-gray-800 px-6 py-2"
           >
             Add Event
           </Button>
         </Box>
 
-        <EventList />
+        <EventList onEdit={handleOpenModal} />
       </Container>
 
-      <AddEventModal open={isModalOpen} onClose={() => setIsModalOpen(false)} />
+      <AddEventModal
+        open={isModalOpen}
+        onClose={handleCloseModal}
+        eventToEdit={eventToEdit}
+      />
     </Box>
   );
 }
