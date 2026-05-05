@@ -7,21 +7,46 @@ import {
   TextField,
   Typography,
   Paper,
+  Alert,
 } from "@mui/material";
 import { useState } from "react";
 import GoogleIcon from "@mui/icons-material/Google";
+import {
+  signInWithEmailAndPassword,
+  signInWithPopup,
+  GoogleAuthProvider,
+} from "firebase/auth";
+import { auth } from "../../lib/firebase";
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const router = useRouter();
 
-  const handleEmailLogin = (e: React.FormEvent) => {
+  const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Submit form with:", email, password);
+    setError("");
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      router.push("/");
+    } catch (err: any) {
+      console.error(err);
+      setError("Invalid email or password. Please try again.");
+    }
   };
 
-  const handleGoogleLogin = () => {
-    console.log("Google login clicked");
+  const handleGoogleLogin = async () => {
+    setError("");
+    try {
+      const provider = new GoogleAuthProvider();
+      await signInWithPopup(auth, provider);
+      router.push("/");
+    } catch (err: any) {
+      console.error(err);
+      setError("Failed to sign in with Google.");
+    }
   };
 
   return (
@@ -38,6 +63,12 @@ export default function LoginPage() {
         >
           Sign In
         </Typography>
+
+        {error && (
+          <Alert severity="error" className="mb-4 w-full">
+            {error}
+          </Alert>
+        )}
 
         <Box component="form" onSubmit={handleEmailLogin} className="w-full">
           <TextField
