@@ -1,3 +1,4 @@
+// src/components/CalendarView.tsx
 "use client";
 
 import FullCalendar from "@fullcalendar/react";
@@ -10,11 +11,13 @@ import { Box, Paper } from "@mui/material";
 interface CalendarViewProps {
   events: CalendarEvent[];
   onEventClick: (event: CalendarEvent) => void;
+  onDateClick: (dateStr: string) => void; // ДОДАЛИ НОВИЙ ПРОПС
 }
 
 export default function CalendarView({
   events,
   onEventClick,
+  onDateClick,
 }: CalendarViewProps) {
   const calendarEvents = events.map((evt) => ({
     id: evt.id,
@@ -34,7 +37,10 @@ export default function CalendarView({
     <Paper className="p-4 rounded-xl shadow-sm border border-gray-200 bg-white">
       <Box
         sx={{
-          "& .fc-toolbar-title": { fontSize: "1.25rem", fontWeight: "bold" },
+          "& .fc-toolbar-title": {
+            fontSize: "1.25rem",
+            fontWeight: "bold",
+          },
           "& .fc-button-primary": {
             backgroundColor: "#000 !important",
             borderColor: "#000 !important",
@@ -52,9 +58,10 @@ export default function CalendarView({
             right: "dayGridMonth,timeGridWeek,timeGridDay",
           }}
           events={calendarEvents}
-          eventClick={(info) => {
-            onEventClick(info.event.extendedProps as CalendarEvent);
-          }}
+          eventClick={(info) =>
+            onEventClick(info.event.extendedProps as CalendarEvent)
+          }
+          dateClick={(info) => onDateClick(info.dateStr)}
           height="70vh"
         />
       </Box>

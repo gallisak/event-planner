@@ -30,6 +30,7 @@ export default function Home() {
   const { user } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [eventToEdit, setEventToEdit] = useState<CalendarEvent | null>(null);
+  const [selectedDate, setSelectedDate] = useState<string>("");
 
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [loading, setLoading] = useState(true);
@@ -85,13 +86,15 @@ export default function Home() {
     });
   }, [events, searchQuery, filterImportance]);
 
-  const handleOpenModal = (event?: CalendarEvent) => {
+  const handleOpenModal = (event?: CalendarEvent, date?: string) => {
     setEventToEdit(event || null);
+    setSelectedDate(date || "");
     setIsModalOpen(true);
   };
 
   const handleCloseModal = () => {
     setEventToEdit(null);
+    setSelectedDate("");
     setIsModalOpen(false);
   };
 
@@ -178,6 +181,7 @@ export default function Home() {
           <CalendarView
             events={filteredEvents}
             onEventClick={handleOpenModal}
+            onDateClick={(dateStr) => handleOpenModal(undefined, dateStr)}
           />
         )}
       </Container>
@@ -186,6 +190,7 @@ export default function Home() {
         open={isModalOpen}
         onClose={handleCloseModal}
         eventToEdit={eventToEdit}
+        defaultDate={selectedDate}
       />
     </Box>
   );

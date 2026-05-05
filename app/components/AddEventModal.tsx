@@ -21,6 +21,7 @@ interface AddEventModalProps {
   open: boolean;
   onClose: () => void;
   eventToEdit?: CalendarEvent | null;
+  defaultDate?: string;
 }
 
 const importances: EventImportance[] = ["ordinary", "important", "critical"];
@@ -29,6 +30,7 @@ export default function AddEventModal({
   open,
   onClose,
   eventToEdit,
+  defaultDate,
 }: AddEventModalProps) {
   const { user } = useAuth();
   const [title, setTitle] = useState("");
@@ -42,16 +44,39 @@ export default function AddEventModal({
   const [prevEvent, setPrevEvent] = useState<CalendarEvent | null | undefined>(
     undefined,
   );
+  const [prevDefaultDate, setPrevDefaultDate] = useState<string | undefined>(
+    undefined,
+  ); // ДОДАЛИ
 
-  if (open !== prevOpen || eventToEdit !== prevEvent) {
+  if (
+    open !== prevOpen ||
+    eventToEdit !== prevEvent ||
+    defaultDate !== prevDefaultDate
+  ) {
     setPrevOpen(open);
     setPrevEvent(eventToEdit);
+    setPrevDefaultDate(defaultDate);
 
     if (open) {
-      setTitle(eventToEdit?.title || "");
-      setDate(eventToEdit?.date || "");
-      setDescription(eventToEdit?.description || "");
-      setImportance(eventToEdit?.importance || "ordinary");
+      if (eventToEdit) {
+        setTitle(eventToEdit.title || "");
+        setDate(eventToEdit.date || "");
+        setDescription(eventToEdit.description || "");
+        setImportance(eventToEdit.importance || "ordinary");
+      } else {
+        setTitle("");
+        setDescription("");
+        setImportance("ordinary");
+
+        let initialDate = "";
+        if (defaultDate) {
+          initialDate =
+            defaultDate.length === 10
+              ? `${defaultDate}T12:00`
+              : defaultDate.slice(0, 16);
+        }
+        setDate(initialDate);
+      }
     }
   }
 
