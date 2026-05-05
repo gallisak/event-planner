@@ -1,7 +1,6 @@
-// src/app/page.tsx
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Header from "./components/Header";
 import AddEventModal from "./components/AddEventModal";
 import EventList from "./components/EventList";
@@ -14,11 +13,15 @@ import {
   ToggleButton,
   ToggleButtonGroup,
   CircularProgress,
+  TextField,
+  MenuItem,
+  InputAdornment,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import ViewListIcon from "@mui/icons-material/ViewList";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
-import { CalendarEvent } from "./types";
+import SearchIcon from "@mui/icons-material/Search";
+import { CalendarEvent, EventImportance } from "./types";
 import { collection, query, where, onSnapshot } from "firebase/firestore";
 import { db } from "./lib/firebase";
 import { useAuth } from "./context/AuthContext";
@@ -31,6 +34,11 @@ export default function Home() {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<"list" | "calendar">("list");
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterImportance, setFilterImportance] = useState<
+    "all" | EventImportance
+  >("all");
 
   useEffect(() => {
     if (!user) return;
@@ -62,6 +70,21 @@ export default function Home() {
     return () => unsubscribe();
   }, [user]);
 
+  const filteredEvents = useMemo(() => {
+    return events.filter((event) => {
+      const matchesSearch =
+        event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (event.description || "")
+          .toLowerCase()
+          .includes(searchQuery.toLowerCase());
+
+      const matchesImportance =
+        filterImportance === "all" || event.importance === filterImportance;
+
+      return matchesSearch && matchesImportance;
+    });
+  }, [events, searchQuery, filterImportance]);
+
   const handleOpenModal = (event?: CalendarEvent) => {
     setEventToEdit(event || null);
     setIsModalOpen(true);
@@ -77,16 +100,46 @@ export default function Home() {
       <Header />
 
       <Container maxWidth="lg" className="py-8 grow">
-        <Box className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
+        <Box className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
           <Typography
             variant="h4"
             component="h1"
-            className="font-bold text-gray-900"
+            className="font-bold text-gray-900 min-w-max"
           >
             My Events
           </Typography>
 
-          <Box className="flex items-center gap-4">
+          <Box className="flex flex-wrap items-center gap-3 w-full justify-end">
+            <TextField
+              size="small"
+              placeholder="Search events..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon fontSize="small" />
+                    </InputAdornment>
+                  ),
+                },
+              }}
+              className="bg-white min-w-50"
+            />
+
+            <TextField
+              select
+              size="small"
+              value={filterImportance}
+              onChange={(e) => setFilterImportance(e.target.value as any)}
+              className="bg-white min-w-35"
+            >
+              <MenuItem value="all">All levels</MenuItem>
+              <MenuItem value="ordinary">Ordinary</MenuItem>
+              <MenuItem value="important">Important</MenuItem>
+              <MenuItem value="critical">Critical</MenuItem>
+            </TextField>
+
             <ToggleButtonGroup
               value={view}
               exclusive
@@ -94,7 +147,7 @@ export default function Home() {
                 if (newView !== null) setView(newView);
               }}
               size="small"
-              className="bg-white"
+              className="bg-white h-10"
             >
               <ToggleButton value="list">
                 <ViewListIcon />
@@ -108,9 +161,9 @@ export default function Home() {
               variant="contained"
               startIcon={<AddIcon />}
               onClick={() => handleOpenModal()}
-              className="bg-black text-white hover:bg-gray-800 px-6 py-2"
+              className="bg-black text-white hover:bg-gray-800 h-10"
             >
-              Add Event
+              Add
             </Button>
           </Box>
         </Box>
@@ -120,9 +173,12 @@ export default function Home() {
             <CircularProgress className="text-black" />
           </Box>
         ) : view === "list" ? (
-          <EventList events={events} onEdit={handleOpenModal} />
+          <EventList events={filteredEvents} onEdit={handleOpenModal} />
         ) : (
-          <CalendarView events={events} onEventClick={handleOpenModal} />
+          <CalendarView
+            events={filteredEvents}
+            onEventClick={handleOpenModal}
+          />
         )}
       </Container>
 
