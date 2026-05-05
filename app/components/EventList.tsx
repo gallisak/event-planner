@@ -1,7 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { collection, query, where, onSnapshot } from "firebase/firestore";
+import {
+  collection,
+  query,
+  where,
+  onSnapshot,
+  doc,
+  deleteDoc,
+} from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { useAuth } from "../context/AuthContext";
 import { CalendarEvent } from "../types";
@@ -12,12 +19,24 @@ import {
   Typography,
   CircularProgress,
   Chip,
+  IconButton,
 } from "@mui/material";
+import DeleteIcon from "@mui/icons-material/Delete";
 
 export default function EventList() {
   const { user } = useAuth();
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const handleDelete = async (eventId: string) => {
+    if (!window.confirm("Are you sure you want to delete this event?")) return;
+
+    try {
+      await deleteDoc(doc(db, "events", eventId));
+    } catch (error) {
+      console.error("Error deleting event:", error);
+    }
+  };
 
   useEffect(() => {
     if (!user) return;
@@ -88,19 +107,30 @@ export default function EventList() {
         >
           <CardContent className="grow">
             <Box className="flex justify-between items-start mb-3">
-              <Typography
-                variant="h6"
-                className="font-bold line-clamp-1"
-                title={event.title}
-              >
-                {event.title}
-              </Typography>
-              <Chip
-                label={event.importance}
-                color={getImportanceColor(event.importance) as any}
+              <Box>
+                <Typography
+                  variant="h6"
+                  className="font-bold line-clamp-1"
+                  title={event.title}
+                >
+                  {event.title}
+                </Typography>
+                <Chip
+                  label={event.importance}
+                  color={getImportanceColor(event.importance) as any}
+                  size="small"
+                  className="capitalize mt-1"
+                />
+              </Box>
+
+              <IconButton
+                onClick={() => handleDelete(event.id!)}
+                color="error"
                 size="small"
-                className="capitalize"
-              />
+                className="ml-2"
+              >
+                <DeleteIcon fontSize="small" />
+              </IconButton>
             </Box>
 
             <Typography
