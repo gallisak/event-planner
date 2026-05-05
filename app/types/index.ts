@@ -7,4 +7,5 @@ export interface CalendarEvent {
   description: string;
   importance: EventImportance;
   userId: string;
+  createdAt?: string;
 }

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Header from "./components/Header";
 import AddEventModal from "./components/AddEventModal";
+import EventList from "./components/EventList";
 import { Container, Typography, Box, Button } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 
@@ -14,7 +15,7 @@ export default function Home() {
       <Header />
 
       <Container maxWidth="lg" className="py-8 grow">
-        <Box className="flex justify-between items-center mb-6">
+        <Box className="flex justify-between items-center mb-8">
           <Typography
             variant="h4"
             component="h1"
@@ -26,17 +27,13 @@ export default function Home() {
             variant="contained"
             startIcon={<AddIcon />}
             onClick={() => setIsModalOpen(true)}
-            className="bg-black text-white hover:bg-gray-800"
+            className="bg-black text-white hover:bg-gray-800 px-6 py-2"
           >
             Add Event
           </Button>
         </Box>
 
-        <Box className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 min-h-125 flex items-center justify-center">
-          <Typography color="textSecondary" className="text-lg">
-            A calendar and list of events will be here soon...
-          </Typography>
-        </Box>
+        <EventList />
       </Container>
 
       <AddEventModal open={isModalOpen} onClose={() => setIsModalOpen(false)} />
