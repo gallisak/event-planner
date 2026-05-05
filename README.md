@@ -1,4 +1,4 @@
-# UserFlow
+# Event Planner
 
 ### Tech Stack:
 
