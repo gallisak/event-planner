@@ -15,6 +15,7 @@ import { EventImportance, CalendarEvent } from "../types";
 import { collection, addDoc, doc, updateDoc } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { useAuth } from "../context/AuthContext";
+import { useSnackbar } from "../context/SnackbarContext";
 
 interface AddEventModalProps {
   open: boolean;
@@ -35,6 +36,7 @@ export default function AddEventModal({
   const [description, setDescription] = useState("");
   const [importance, setImportance] = useState<EventImportance>("ordinary");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { showSnackbar } = useSnackbar();
 
   const [prevOpen, setPrevOpen] = useState(false);
   const [prevEvent, setPrevEvent] = useState<CalendarEvent | null | undefined>(
@@ -68,7 +70,7 @@ export default function AddEventModal({
           description,
           importance,
         });
-        console.log("Event successfully updated!");
+        showSnackbar("Event successfully updated!", "success");
       } else {
         await addDoc(collection(db, "events"), {
           title,
@@ -78,7 +80,7 @@ export default function AddEventModal({
           userId: user.uid,
           createdAt: new Date().toISOString(),
         });
-        console.log("Event successfully saved!");
+        showSnackbar("New event created!", "success");
       }
       onClose();
     } catch (error) {

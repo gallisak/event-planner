@@ -13,6 +13,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import { doc, deleteDoc } from "firebase/firestore";
 import { db } from "../lib/firebase";
+import { useSnackbar } from "../context/SnackbarContext";
 
 interface EventListProps {
   events: CalendarEvent[];
@@ -20,11 +21,14 @@ interface EventListProps {
 }
 
 export default function EventList({ events, onEdit }: EventListProps) {
+  const { showSnackbar } = useSnackbar();
+
   const handleDelete = async (eventId: string) => {
     if (!window.confirm("Are you sure you want to delete this event?")) return;
 
     try {
       await deleteDoc(doc(db, "events", eventId));
+      showSnackbar("Event deleted", "info");
     } catch (error) {
       console.error("Error deleting event:", error);
     }

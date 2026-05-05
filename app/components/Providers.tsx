@@ -4,6 +4,7 @@ import { createTheme, ThemeProvider } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
 import { ReactNode } from "react";
 import { AuthProvider } from "../context/AuthContext";
+import { SnackbarProvider } from "../context/SnackbarContext";
 
 const theme = createTheme({
   palette: {
@@ -19,7 +20,9 @@ export default function Providers({ children }: { children: ReactNode }) {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <AuthProvider>{children}</AuthProvider>
+      <SnackbarProvider>
+        <AuthProvider>{children}</AuthProvider>
+      </SnackbarProvider>
     </ThemeProvider>
   );
 }
