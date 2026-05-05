@@ -9,8 +9,12 @@ import {
   Button,
   TextField,
   MenuItem,
+  CircularProgress,
 } from "@mui/material";
 import { EventImportance } from "../types";
+import { collection, addDoc } from "firebase/firestore";
+import { db } from "../lib/firebase";
+import { useAuth } from "../context/AuthContext";
 
 interface AddEventModalProps {
   open: boolean;
@@ -20,21 +24,41 @@ interface AddEventModalProps {
 const importances: EventImportance[] = ["ordinary", "important", "critical"];
 
 export default function AddEventModal({ open, onClose }: AddEventModalProps) {
+  const { user } = useAuth();
   const [title, setTitle] = useState("");
   const [date, setDate] = useState("");
   const [description, setDescription] = useState("");
   const [importance, setImportance] = useState<EventImportance>("ordinary");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSave = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSave = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!user) return;
 
-    console.log("New event:", { title, date, description, importance });
+    setIsSubmitting(true);
 
-    setTitle("");
-    setDate("");
-    setDescription("");
-    setImportance("ordinary");
-    onClose();
+    try {
+      await addDoc(collection(db, "events"), {
+        title,
+        date,
+        description,
+        importance,
+        userId: user.uid,
+        createdAt: new Date().toISOString(),
+      });
+
+      console.log("Event successfully saved to Firestore!");
+
+      setTitle("");
+      setDate("");
+      setDescription("");
+      setImportance("ordinary");
+      onClose();
+    } catch (error) {
+      console.error("Error adding document: ", error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -89,15 +113,21 @@ export default function AddEventModal({ open, onClose }: AddEventModalProps) {
         </DialogContent>
 
         <DialogActions className="p-4">
-          <Button onClick={onClose} color="inherit">
+          <Button onClick={onClose} color="inherit" disabled={isSubmitting}>
             Cancel
           </Button>
           <Button
             type="submit"
             variant="contained"
+            disabled={isSubmitting}
             className="bg-black text-white hover:bg-gray-800"
+            startIcon={
+              isSubmitting ? (
+                <CircularProgress size={20} color="inherit" />
+              ) : null
+            }
           >
-            Save
+            {isSubmitting ? "Saving..." : "Save"}
           </Button>
         </DialogActions>
       </form>
